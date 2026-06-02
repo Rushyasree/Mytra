@@ -98,11 +98,11 @@ export default async function AdminDashboard() {
                   <div key={b.id} className="flex items-center justify-between p-4 rounded-3xl hover:bg-gray-50 dark:hover:bg-black transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {b.traveler.name.charAt(0)}
+                        {(b.traveler.name || 'User').charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold">{b.traveler.name}</p>
-                        <p className="text-xs text-gray-500">Booked with {b.guide.name}</p>
+                        <p className="text-sm font-bold">{b.traveler.name || 'Anonymous User'}</p>
+                        <p className="text-xs text-gray-500">Booked with {b.guide.name || 'Guide'}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -122,9 +122,9 @@ export default async function AdminDashboard() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recentUsers.map((u) => (
                   <div key={u.email} className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50/50 dark:bg-black/50 border border-gray-100 dark:border-gray-800">
-                    <img src={u.image || `https://ui-avatars.com/api/?name=${u.name}`} className="w-10 h-10 rounded-xl" alt="" />
+                    <img src={u.image || `https://ui-avatars.com/api/?name=${u.name || 'User'}`} className="w-10 h-10 rounded-xl" alt="" />
                     <div className="min-w-0">
-                      <p className="text-sm font-bold truncate">{u.name}</p>
+                      <p className="text-sm font-bold truncate">{u.name || 'Anonymous'}</p>
                       <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
                     </div>
                   </div>
@@ -147,7 +147,7 @@ export default async function AdminDashboard() {
                  emergencyAlerts.map((alert) => (
                    <div key={alert.id} className="p-4 bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-100 dark:border-red-500/20">
                      <div className="flex justify-between items-start mb-2">
-                       <p className="text-sm font-black text-red-900 dark:text-red-200">{alert.traveler.name}</p>
+                       <p className="text-sm font-black text-red-900 dark:text-red-200">{alert.traveler.name || 'Anonymous User'}</p>
                        <p className="text-[10px] font-black uppercase text-red-500">{new Date(alert.sosTimestamp!).toLocaleTimeString()}</p>
                      </div>
                      <p className="text-xs text-red-700 dark:text-red-400 mb-3">Booking ID: {alert.id.slice(0,8)}</p>
