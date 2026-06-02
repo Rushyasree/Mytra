@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("TRAVELER") // TRAVELER, GUIDE, ADMIN
+  isFlagged     Boolean   @default(false)
+  flagReason    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  guideProfile  GuideProfile?
+  bookings      Booking[]      @relation("TravelerBookings")
+  guideBookings Booking[]      @relation("GuideBookings")
+  reviews       Review[]
+  messages      Message[]
+  notifications Notification[]
+  favorites     Favorite[]
+}
+
+model GuideProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university    String?
+  languages     String?  // comma separated
+  bio           String?
+  pricePerHour  Float    @default(0.0)
+  rating        Float    @default(0.0)
+  isVerified    Boolean  @default(false)
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  gender        String   @default("male") // male, female, other
+  interests     String?  // comma separated: food, culture, nightlife, heritage, etc.
+  isFlagged     Boolean  @default(false)
+  flagReason    String?
+  
+  cityId        String?
+  city          City?    @relation(fields: [cityId], references: [id])
+  
+  availability  Availability[]
+  favoritedBy   Favorite[]
+}
+
+
+model Availability {
+  id            String   @id @default(cuid())
+  guideId       String
+  guide         GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  date          DateTime
+  startTime     String   // e.g. "09:00"
+  endTime       String   // e.g. "17:00"
+  isBooked      Boolean  @default(false)
+}
+
+model City {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  state       String
+  image       String?
+  description String?
+  category    String   @default("city") // metro, city, town, tourist
+  region      String?  // North, South, East, West, Northeast
+  
+  guides      GuideProfile[]
+  experiences Experience[]
+}
+
+model Experience {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String?
+  price       Float
+  duration    Int      // in minutes
+  category    String   // Food, Heritage, Nightlife, etc.
+  tag         String?  // hidden, trending, favorite
+  
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  travelerId  String
+  traveler    User     @relation("TravelerBookings", fields: [travelerId], references: [id])
+  guideId     String
+  guide       User     @relation("GuideBookings", fields: [guideId], references: [id])
+  
+  date        DateTime
+  duration    Int      // hours
+  totalPrice  Float
+  status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  
+  // Safety Features
+  sosTriggered  Boolean  @default(false)
+  sosTimestamp  DateTime?
+  lat           Float?
+  lng           Float?
+  
+  messages    Message[]
+  createdAt   DateTime @default(now())
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int
+  comment     String?
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  guideId     String   // The guide being reviewed
+  
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String   // BOOKING, MESSAGE, SYSTEM
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Favorite {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guideId     String
+  guide       GuideProfile @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, guideId])
+}
+
