@@ -7,16 +7,16 @@ async function main() {
   
   // Create cities
   const citiesData = [
-    { name: 'Delhi', state: 'Delhi NCR', image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&q=80' },
-    { name: 'Mumbai', state: 'Maharashtra', image: 'https://images.unsplash.com/photo-1522206090980-4c8e5fa4e0b0?auto=format&fit=crop&q=80' },
-    { name: 'Jaipur', state: 'Rajasthan', image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&q=80' },
-    { name: 'Hyderabad', state: 'Telangana', image: 'https://images.unsplash.com/photo-1615469038354-bebc7a996e8d?auto=format&fit=crop&q=80' },
-    { name: 'Kochi', state: 'Kerala', image: 'https://images.unsplash.com/photo-1593693397690-362af9666fc2?auto=format&fit=crop&q=80' },
-    { name: 'Chennai', state: 'Tamil Nadu', image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80' },
-    { name: 'Varanasi', state: 'Uttar Pradesh', image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80' },
-    { name: 'Tirupati', state: 'Andhra Pradesh', image: 'https://images.unsplash.com/photo-1580192980104-2049d569772a?auto=format&fit=crop&q=80' },
-    { name: 'Pondicherry', state: 'Puducherry', image: 'https://images.unsplash.com/photo-1580502283993-9799279185a3?auto=format&fit=crop&q=80' },
-    { name: 'Bengaluru', state: 'Karnataka', image: 'https://images.unsplash.com/photo-1596760405809-780247492462?auto=format&fit=crop&q=80' },
+    { name: 'Delhi', slug: 'delhi', state: 'Delhi NCR', image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&q=80' },
+    { name: 'Mumbai', slug: 'mumbai', state: 'Maharashtra', image: 'https://images.unsplash.com/photo-1522206090980-4c8e5fa4e0b0?auto=format&fit=crop&q=80' },
+    { name: 'Jaipur', slug: 'jaipur', state: 'Rajasthan', image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&q=80' },
+    { name: 'Hyderabad', slug: 'hyderabad', state: 'Telangana', image: 'https://images.unsplash.com/photo-1615469038354-bebc7a996e8d?auto=format&fit=crop&q=80' },
+    { name: 'Kochi', slug: 'kochi', state: 'Kerala', image: 'https://images.unsplash.com/photo-1593693397690-362af9666fc2?auto=format&fit=crop&q=80' },
+    { name: 'Chennai', slug: 'chennai', state: 'Tamil Nadu', image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80' },
+    { name: 'Varanasi', slug: 'varanasi', state: 'Uttar Pradesh', image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&q=80' },
+    { name: 'Tirupati', slug: 'tirupati', state: 'Andhra Pradesh', image: 'https://images.unsplash.com/photo-1580192980104-2049d569772a?auto=format&fit=crop&q=80' },
+    { name: 'Pondicherry', slug: 'pondicherry', state: 'Puducherry', image: 'https://images.unsplash.com/photo-1580502283993-9799279185a3?auto=format&fit=crop&q=80' },
+    { name: 'Bengaluru', slug: 'bengaluru', state: 'Karnataka', image: 'https://images.unsplash.com/photo-1596760405809-780247492462?auto=format&fit=crop&q=80' },
   ];
 
   const createdCities = await Promise.all(
