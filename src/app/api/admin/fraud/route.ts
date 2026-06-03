@@ -1,12 +1,10 @@
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/security";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   try {
     // 1. Fetch flagged entities
@@ -48,10 +46,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-    const session = await auth();
-    if (!session?.user || (session.user as any).role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     try {
         const { targetId, targetType, isFlagged, flagReason } = await req.json();

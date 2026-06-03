@@ -1,21 +1,19 @@
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/security";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   try {
     const { id } = await params;
     const { status } = await req.json();
 
-    if (!["APPROVED", "REJECTED", "PENDING"].includes(status)) {
+    if (!["APPROVED", "REJECTED", "PENDING_APPROVAL", "SUSPENDED"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 

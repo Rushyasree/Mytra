@@ -7,6 +7,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AIPlanGenerator } from "@/components/itinerary/AIPlanGenerator";
 
+export const dynamic = "force-dynamic";
+
 export default async function CityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
@@ -14,7 +16,13 @@ export default async function CityDetailPage({ params }: { params: Promise<{ slu
     where: { slug },
     include: {
       guides: {
-        where: { status: 'APPROVED' },
+        where: {
+          status: 'APPROVED',
+          bio: { not: null },
+          languages: { not: null },
+          interests: { not: null },
+          pricePerHour: { gt: 0 },
+        },
         include: { user: true }
       },
       experiences: true

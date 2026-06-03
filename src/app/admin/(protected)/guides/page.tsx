@@ -1,6 +1,17 @@
 import { GuideApprovalList } from "@/components/admin/GuideApprovalList";
+import prisma from "@/lib/prisma";
 
-export default function AdminGuidesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminGuidesPage() {
+  const guides = await prisma.guideProfile.findMany({
+    include: {
+      user: { select: { name: true, email: true, image: true } },
+      city: true,
+    },
+    orderBy: { status: "desc" },
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -8,7 +19,7 @@ export default function AdminGuidesPage() {
         <p className="text-gray-500">Review and verify local guide applications.</p>
       </div>
 
-      <GuideApprovalList />
+      <GuideApprovalList initialGuides={guides} />
     </div>
   );
 }

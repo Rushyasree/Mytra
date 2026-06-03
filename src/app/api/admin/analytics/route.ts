@@ -1,12 +1,10 @@
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/security";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   try {
     // 1. Most Booked Cities

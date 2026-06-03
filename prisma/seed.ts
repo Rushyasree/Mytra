@@ -115,6 +115,7 @@ async function main() {
             pricePerHour: g.profile.pricePerHour,
             rating: g.profile.rating,
             isVerified: true,
+            status: 'APPROVED',
             cityId: createdCities.find(c => c.name === g.profile.cityName)?.id,
           }
         }

@@ -1,9 +1,13 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/security";
 import { NextResponse } from "next/server";
 
 // Fetch messages for a specific booking
 export async function GET(req: Request) {
+  const rateLimited = checkRateLimit(req, "messages-read", 60, 60_000);
+  if (rateLimited) return rateLimited;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,6 +51,9 @@ export async function GET(req: Request) {
 
 // Send a new message
 export async function POST(req: Request) {
+  const rateLimited = checkRateLimit(req, "messages-send", 30, 60_000);
+  if (rateLimited) return rateLimited;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

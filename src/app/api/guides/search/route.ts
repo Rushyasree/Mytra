@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { parsePreferenceList, scoreGuideRecommendation } from "@/lib/recommendations";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,14 +11,21 @@ export async function GET(request: Request) {
   const maxPrice = parseFloat(searchParams.get("maxPrice") || "10000");
   const rating = parseFloat(searchParams.get("rating") || "0");
   const gender = searchParams.get("gender") || "";
-  const interests = searchParams.get("interests") ? searchParams.get("interests")?.split(",") : [];
+  const interests = parsePreferenceList(searchParams.get("interests"));
+  const languages = parsePreferenceList(searchParams.get("languages"));
+  const travelerType = searchParams.get("travelerType") || "";
+  const safetyPreference = searchParams.get("safetyPreference") || "";
   const page = parseInt(searchParams.get("page") || "1");
   const limit = 9;
   const skip = (page - 1) * limit;
 
-  const where: any = {
+  const where: Record<string, unknown> = {
     status: "APPROVED",
-    pricePerHour: { gte: minPrice, lte: maxPrice },
+    bio: { not: null },
+    languages: { not: null },
+    interests: { not: null },
+    cityId: { not: null },
+    pricePerHour: { gt: 0, gte: minPrice, lte: maxPrice },
     rating: { gte: rating },
   };
 
@@ -36,22 +44,41 @@ export async function GET(request: Request) {
     where.gender = gender;
   }
 
-  if (interests && interests.length > 0) {
-    where.interests = {
-      contains: interests[0], // Simplified for now
-    };
-  }
-
   try {
-    const guides = await prisma.guideProfile.findMany({
+    const candidates = await prisma.guideProfile.findMany({
       where,
-      include: { user: true, city: true },
+      include: {
+        user: true,
+        city: true,
+        availability: {
+          where: {
+            isBooked: false,
+            date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+          },
+          take: 3,
+        },
+      },
       orderBy: { rating: "desc" },
-      take: limit,
-      skip: skip,
     });
 
-    const total = await prisma.guideProfile.count({ where });
+    const scoredGuides = candidates
+      .map((guide) => ({
+        ...guide,
+        recommendation: scoreGuideRecommendation(guide, {
+          city,
+          languages,
+          interests,
+          travelerType,
+          safetyPreference,
+          minPrice,
+          maxPrice,
+        }),
+      }))
+      .filter((guide) => interests.length === 0 || guide.recommendation.scoreBreakdown.interests > 0)
+      .sort((a, b) => b.recommendation.matchScore - a.recommendation.matchScore || b.rating - a.rating);
+
+    const guides = scoredGuides.slice(skip, skip + limit);
+    const total = scoredGuides.length;
 
     return NextResponse.json({
       guides,

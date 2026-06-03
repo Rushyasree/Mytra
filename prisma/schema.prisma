@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -34,12 +34,16 @@ model GuideProfile {
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   university    String?
+  studentId     String?
+  governmentId  String?
+  emergencyContact String?
+  availabilityNote String?
   languages     String?  // comma separated
   bio           String?
   pricePerHour  Float    @default(0.0)
   rating        Float    @default(0.0)
   isVerified    Boolean  @default(false)
-  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status        String   @default("PENDING_APPROVAL") // PENDING_APPROVAL, APPROVED, REJECTED, SUSPENDED
   gender        String   @default("male") // male, female, other
   interests     String?  // comma separated: food, culture, nightlife, heritage, etc.
   isFlagged     Boolean  @default(false)
@@ -61,6 +65,9 @@ model Availability {
   startTime     String   // e.g. "09:00"
   endTime       String   // e.g. "17:00"
   isBooked      Boolean  @default(false)
+  bookings      Booking[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model City {
@@ -97,10 +104,20 @@ model Booking {
   traveler    User     @relation("TravelerBookings", fields: [travelerId], references: [id])
   guideId     String
   guide       User     @relation("GuideBookings", fields: [guideId], references: [id])
+  guideProfileId String?
+  experienceId String?
+  cityId      String?
+  availabilityId String?
+  availability Availability? @relation(fields: [availabilityId], references: [id])
   
   date        DateTime
+  startTime   String?
+  endTime     String?
   duration    Int      // hours
+  travelersCount Int   @default(1)
+  notes       String?
   totalPrice  Float
+  currency    String   @default("INR")
   status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
   
   // Safety Features
@@ -110,7 +127,22 @@ model Booking {
   lng           Float?
   
   messages    Message[]
+  payments    Payment[]
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  bookingId         String
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  provider          String   @default("MANUAL")
+  providerPaymentId String?
+  amount            Float
+  currency          String   @default("INR")
+  status            String   @default("INITIATED") // INITIATED, PAID, FAILED, REFUNDED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Message {

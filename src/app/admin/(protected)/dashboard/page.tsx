@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { Users, UserCheck, BookOpen, IndianRupee, AlertTriangle, MapPin } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const results = await Promise.all([
     prisma.user.count(),
@@ -12,7 +14,7 @@ export default async function AdminDashboard() {
       _sum: { totalPrice: true } 
     }),
     prisma.user.count({ where: { updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
-    prisma.guideProfile.count({ where: { status: "PENDING" } }),
+    prisma.guideProfile.count({ where: { status: "PENDING_APPROVAL" } }),
     prisma.booking.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },

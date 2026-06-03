@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 interface BookingStatusButtonsProps {
   bookingId: string;
   currentStatus: string;
+  mode?: "guide" | "traveler";
 }
 
-export function BookingStatusButtons({ bookingId, currentStatus }: BookingStatusButtonsProps) {
+export function BookingStatusButtons({ bookingId, currentStatus, mode = "guide" }: BookingStatusButtonsProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -31,7 +32,21 @@ export function BookingStatusButtons({ bookingId, currentStatus }: BookingStatus
     }
   };
 
-  if (currentStatus === "PENDING") {
+  if (mode === "traveler" && (currentStatus === "PENDING" || currentStatus === "CONFIRMED")) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={loading}
+        onClick={() => updateStatus("CANCELLED")}
+        className="rounded-lg px-4 border-red-200 text-red-500 hover:bg-red-50"
+      >
+        Cancel
+      </Button>
+    );
+  }
+
+  if (mode === "guide" && currentStatus === "PENDING") {
     return (
       <div className="flex items-center gap-3">
         <Button 
@@ -55,7 +70,7 @@ export function BookingStatusButtons({ bookingId, currentStatus }: BookingStatus
     );
   }
 
-  if (currentStatus === "CONFIRMED") {
+  if (mode === "guide" && currentStatus === "CONFIRMED") {
     return (
       <Button 
         size="sm" 

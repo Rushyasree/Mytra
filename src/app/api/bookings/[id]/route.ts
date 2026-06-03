@@ -1,15 +1,17 @@
-import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import {
+  checkRateLimit,
+  requireBookingAccess,
+  validateBookingStatusTransition,
+} from "@/lib/security";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const rateLimited = checkRateLimit(req, "booking-status", 20, 60_000);
+  if (rateLimited) return rateLimited;
 
   const { id } = await params;
   const { status } = await req.json();
@@ -19,31 +21,71 @@ export async function PATCH(
   }
 
   try {
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-    });
-
-    if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    const access = await requireBookingAccess(id);
+    if (access.response) return access.response;
+    const { booking, user } = access;
+    if (!booking || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Authorization check: Only traveler or guide can update status
-    if (booking.travelerId !== session.user.id && booking.guideId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const transitionError = validateBookingStatusTransition(booking.status, status);
+    if (transitionError) {
+      return NextResponse.json({ error: transitionError }, { status: 400 });
     }
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id },
-      data: { status },
+    const isTraveler = user.id === booking.travelerId;
+    const isGuide = user.id === booking.guideId;
+    const isAdmin = user.role === "ADMIN";
+
+    if (status === "CONFIRMED" && !isGuide && !isAdmin) {
+      return NextResponse.json({ error: "Only the assigned guide can accept this booking." }, { status: 403 });
+    }
+
+    if (status === "CANCELLED" && booking.status === "PENDING" && !isTraveler && !isGuide && !isAdmin) {
+      return NextResponse.json({ error: "Only the traveler, guide, or admin can cancel this request." }, { status: 403 });
+    }
+
+    if (status === "CANCELLED" && booking.status === "CONFIRMED" && !isTraveler && !isAdmin) {
+      return NextResponse.json({ error: "Only the traveler or admin can cancel confirmed bookings." }, { status: 403 });
+    }
+
+    if (status === "COMPLETED" && !isGuide && !isAdmin) {
+      return NextResponse.json({ error: "Only the guide or admin can mark a booking completed." }, { status: 403 });
+    }
+
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id },
+        data: { status },
+      });
+
+      if (status === "CANCELLED" && booking.availabilityId) {
+        await tx.availability.update({
+          where: { id: booking.availabilityId },
+          data: { isBooked: false },
+        });
+      }
+
+      return updated;
     });
 
     // Notify the other party
-    const notifyId = session.user.id === booking.travelerId ? booking.guideId : booking.travelerId;
+    const notifyId = user.id === booking.travelerId ? booking.guideId : booking.travelerId;
+    const actor = isGuide ? "Guide" : isTraveler ? "Traveler" : "Admin";
+    const statusCopy =
+      status === "CONFIRMED"
+        ? "accepted"
+        : status === "CANCELLED"
+          ? "cancelled"
+          : status === "COMPLETED"
+            ? "completed"
+            : status.toLowerCase();
+
     await prisma.notification.create({
       data: {
         userId: notifyId,
-        title: `Booking Update: ${status}`,
-        message: `Your booking status has been updated to ${status}.`,
+        title: `Booking ${statusCopy}`,
+        message: `${actor} ${statusCopy} your booking.`,
         type: "BOOKING",
       },
     });
