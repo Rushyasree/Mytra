@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, ShieldAlert, X, Navigation, Check, MapPin, ShieldCheck, Heart } from "lucide-react";
+import { AlertTriangle, ShieldAlert, X, Navigation, Check, MapPin, ShieldCheck, Heart, Map } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 
