@@ -4,6 +4,7 @@ import { Footer } from "@/components/ui/Footer";
 import { Navbar } from "@/components/ui/Navbar";
 import { ShieldCheck, Map, Users, Star, ArrowRight } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { safeDatabaseQuery } from "@/lib/db-safe";
 import Link from "next/link";
 import { HeroSearch } from "@/components/ui/HeroSearch";
 
@@ -36,21 +37,28 @@ const testimonials = [
 import { SplashScreen } from "@/components/ui/SplashScreen";
 
 export default async function Home() {
-  const cities = await prisma.city.findMany({ take: 9 });
-  const experiences = await prisma.experience.findMany({ take: 4, include: { city: true } });
-  const featuredGuides = await prisma.guideProfile.findMany({
-    where: {
-      status: "APPROVED",
-      bio: { not: null },
-      languages: { not: null },
-      interests: { not: null },
-      cityId: { not: null },
-      pricePerHour: { gt: 0 },
-    },
-    take: 3,
-    include: { user: true, city: true },
-    orderBy: { rating: "desc" },
-  });
+  const [cities, experiences, featuredGuides] = await safeDatabaseQuery(
+    "home",
+    () =>
+      Promise.all([
+        prisma.city.findMany({ take: 9 }),
+        prisma.experience.findMany({ take: 4, include: { city: true } }),
+        prisma.guideProfile.findMany({
+          where: {
+            status: "APPROVED",
+            bio: { not: null },
+            languages: { not: null },
+            interests: { not: null },
+            cityId: { not: null },
+            pricePerHour: { gt: 0 },
+          },
+          take: 3,
+          include: { user: true, city: true },
+          orderBy: { rating: "desc" },
+        }),
+      ]),
+    [[], [], []]
+  );
 
   return (
     <main className="min-h-screen flex flex-col">

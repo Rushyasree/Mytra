@@ -1,18 +1,24 @@
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
 import prisma from "@/lib/prisma";
+import { safeDatabaseQuery } from "@/lib/db-safe";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function DestinationsPage() {
-  const cities = await prisma.city.findMany({
-    include: {
-      _count: {
-        select: { guides: true, experiences: true }
-      }
-    }
-  });
+  const cities = await safeDatabaseQuery(
+    "destinations",
+    () =>
+      prisma.city.findMany({
+        include: {
+          _count: {
+            select: { guides: true, experiences: true }
+          }
+        }
+      }),
+    []
+  );
 
   return (
     <main className="min-h-screen flex flex-col pt-16 bg-gray-50 dark:bg-black">
