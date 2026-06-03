@@ -30,7 +30,7 @@ Mytra is a premium travel platform that connects international travelers with ve
 
 ## Branding
 
-- **Domain**: [getmytra.com](https://getmytra.com)
+- **Domain**: [getmytra.vercel.app](https://getmytra.vercel.app)
 - **Tagline**: Your Local Friend in Every City
 - **Support**: support@getmytra.com
 
