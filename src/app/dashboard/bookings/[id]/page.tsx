@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function BookingDetailsPage({
   params,
 }: {

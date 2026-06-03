@@ -7,6 +7,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AIPlanGenerator } from "@/components/itinerary/AIPlanGenerator";
 
+export const dynamic = "force-dynamic";
+
 export default async function CityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 

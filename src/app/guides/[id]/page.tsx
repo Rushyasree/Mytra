@@ -5,6 +5,8 @@ import { ShieldCheck, Star, MapPin, Calendar, MessageCircle, Navigation, Clock, 
 import { notFound } from "next/navigation";
 import { BookingCard } from "@/components/booking/BookingCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function GuideProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const guide = await prisma.guideProfile.findFirst({

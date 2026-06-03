@@ -1,6 +1,8 @@
 import { GuideApprovalList } from "@/components/admin/GuideApprovalList";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminGuidesPage() {
   const guides = await prisma.guideProfile.findMany({
     include: {

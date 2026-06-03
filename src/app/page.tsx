@@ -3,11 +3,11 @@ import { HeroSlideshow } from "@/components/ui/HeroSlideshow";
 import { Footer } from "@/components/ui/Footer";
 import { Navbar } from "@/components/ui/Navbar";
 import { ShieldCheck, Map, Users, Star, ArrowRight } from "lucide-react";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { HeroSearch } from "@/components/ui/HeroSearch";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 const testimonials = [
   {

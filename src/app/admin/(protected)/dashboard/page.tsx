@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { Users, UserCheck, BookOpen, IndianRupee, AlertTriangle, MapPin } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const results = await Promise.all([
     prisma.user.count(),

@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { BookingRequestForm } from "./BookingRequestForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function BookingPage({
   searchParams,
 }: {

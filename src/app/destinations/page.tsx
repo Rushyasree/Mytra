@@ -1,9 +1,9 @@
 import { Navbar } from "@/components/ui/Navbar";
 import { Footer } from "@/components/ui/Footer";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import Link from "next/link";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 export default async function DestinationsPage() {
   const cities = await prisma.city.findMany({

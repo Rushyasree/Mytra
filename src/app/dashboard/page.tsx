@@ -8,6 +8,8 @@ import { SafetyPanel } from "@/components/safety/SafetyPanel";
 import { LocationShare } from "@/components/safety/LocationShare";
 import { BookingStatusButtons } from "@/components/ui/BookingStatusButtons";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardOverview() {
   const session = await auth();
   if (!session?.user?.id) {

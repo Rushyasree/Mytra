@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { GuideApplicationForm } from "./GuideApplicationForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function GuideProfilePage() {
   const session = await auth();
   if (!session?.user?.id) {
