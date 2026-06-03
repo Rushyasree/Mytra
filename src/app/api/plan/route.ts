@@ -15,7 +15,14 @@ export async function POST(req: Request) {
       include: {
         experiences: true,
         guides: {
-          where: { status: "APPROVED" },
+          where: {
+            status: "APPROVED",
+            bio: { not: null },
+            languages: { not: null },
+            interests: { not: null },
+            cityId: { not: null },
+            pricePerHour: { gt: 0 },
+          },
           include: { user: true },
           take: 3
         }

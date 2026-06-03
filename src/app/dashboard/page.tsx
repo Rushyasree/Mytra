@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SafetyPanel } from "@/components/safety/SafetyPanel";
 import { LocationShare } from "@/components/safety/LocationShare";
+import { BookingStatusButtons } from "@/components/ui/BookingStatusButtons";
 
 export default async function DashboardOverview() {
   const session = await auth();
@@ -31,6 +32,10 @@ export default async function DashboardOverview() {
         orderBy: { date: "asc" },
       },
       reviews: true,
+      notifications: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
     },
   });
 
@@ -41,6 +46,8 @@ export default async function DashboardOverview() {
   const upcomingBookings = traveler.bookings.filter(
     (b) => new Date(b.date) >= new Date() && b.status !== "CANCELLED"
   );
+  const cancelledBookings = traveler.bookings.filter((b) => b.status === "CANCELLED");
+  const completedBookings = traveler.bookings.filter((b) => b.status === "COMPLETED");
   
   // Find currently active trip (today)
   const today = new Date();
@@ -114,6 +121,20 @@ export default async function DashboardOverview() {
       </div>
 
       {/* Upcoming Trip Section */}
+      {traveler.notifications.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm mb-8">
+          <h2 className="text-xl font-bold mb-4">Notifications</h2>
+          <div className="space-y-3">
+            {traveler.notifications.map((notification) => (
+              <div key={notification.id} className="rounded-2xl bg-gray-50 dark:bg-black p-4">
+                <p className="font-bold">{notification.title}</p>
+                <p className="text-sm text-gray-500">{notification.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <h2 className="text-xl font-bold mb-4">Upcoming Trips</h2>
       <div className="space-y-6">
         {upcomingBookings.length > 0 ? (
@@ -153,11 +174,19 @@ export default async function DashboardOverview() {
                         <MessageSquare className="w-4 h-4" /> Chat
                       </Button>
                     </Link>
+                    <Link href={`/dashboard/bookings/${booking.id}`}>
+                      <Button variant="outline" size="sm" className="rounded-xl h-10 font-bold text-xs">
+                        Details
+                      </Button>
+                    </Link>
                   </div>
                   
                   {/* Location Share (Only if today) */}
                   {new Date(booking.date).toDateString() === today.toDateString() && (
                     <LocationShare bookingId={booking.id} />
+                  )}
+                  {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
+                    <BookingStatusButtons bookingId={booking.id} currentStatus={booking.status} mode="traveler" />
                   )}
                 </div>
               </div>
@@ -172,6 +201,40 @@ export default async function DashboardOverview() {
             </Link>
           </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <h2 className="text-xl font-bold mb-4">Completed Trips</h2>
+          {completedBookings.length === 0 ? (
+            <p className="text-sm text-gray-500">No completed trips yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {completedBookings.map((booking) => (
+                <div key={booking.id} className="rounded-2xl bg-gray-50 dark:bg-black p-4">
+                  <p className="font-bold">Trip with {booking.guide.name}</p>
+                  <p className="text-sm text-gray-500">{new Date(booking.date).toLocaleDateString()} · Rs {booking.totalPrice.toLocaleString("en-IN")}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <h2 className="text-xl font-bold mb-4">Cancelled Trips</h2>
+          {cancelledBookings.length === 0 ? (
+            <p className="text-sm text-gray-500">No cancelled trips.</p>
+          ) : (
+            <div className="space-y-3">
+              {cancelledBookings.map((booking) => (
+                <div key={booking.id} className="rounded-2xl bg-gray-50 dark:bg-black p-4">
+                  <p className="font-bold">Trip with {booking.guide.name}</p>
+                  <p className="text-sm text-gray-500">{new Date(booking.date).toLocaleDateString()} · Cancelled</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

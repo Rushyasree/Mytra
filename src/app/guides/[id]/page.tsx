@@ -1,16 +1,22 @@
 import { Navbar } from "@/components/ui/Navbar";
 import { Button } from "@/components/ui/Button";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { ShieldCheck, Star, MapPin, Calendar, MessageCircle, Navigation, Clock, CheckCircle2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { BookingCard } from "@/components/booking/BookingCard";
 
-const prisma = new PrismaClient();
-
 export default async function GuideProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const guide = await prisma.guideProfile.findUnique({
-    where: { id: resolvedParams.id },
+  const guide = await prisma.guideProfile.findFirst({
+    where: {
+      id: resolvedParams.id,
+      status: "APPROVED",
+      isVerified: true,
+      bio: { not: null },
+      languages: { not: null },
+      interests: { not: null },
+      pricePerHour: { gt: 0 },
+    },
     include: { user: true, city: true }
   });
 

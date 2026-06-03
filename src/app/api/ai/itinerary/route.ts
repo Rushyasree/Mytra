@@ -1,10 +1,14 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkRateLimit } from "@/lib/security";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
+  const rateLimited = checkRateLimit(req, "ai-itinerary", 8, 60_000);
+  if (rateLimited) return rateLimited;
+
   try {
     const { city, days, budget, interests, travelerType } = await req.json();
 
@@ -21,7 +25,14 @@ export async function POST(req: Request) {
           take: 8 // Limit to avoid token overflow and keep AI focused
         },
         guides: {
-          where: { status: "APPROVED" },
+          where: {
+            status: "APPROVED",
+            bio: { not: null },
+            languages: { not: null },
+            interests: { not: null },
+            cityId: { not: null },
+            pricePerHour: { gt: 0 },
+          },
           include: { user: true },
           take: 5
         }

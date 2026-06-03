@@ -28,20 +28,48 @@ export default async function GuideDashboard() {
         orderBy: { date: "asc" },
       },
       reviews: true,
+      notifications: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      },
     },
   });
 
-  if (!user || !user.guideProfile) {
-    redirect("/dashboard"); // Not a guide, go to traveler dashboard
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!user.guideProfile) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm p-10">
+          <Clock className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h1 className="text-3xl font-black mb-3">Complete Your Guide Application</h1>
+          <p className="text-gray-500 mb-8">
+            Your guide account is created. Add your city expertise, verification details, languages, and availability to enter admin review.
+          </p>
+          <Link href="/guide-dashboard/profile">
+            <Button className="rounded-xl h-12 px-8">Start Application</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const pendingBookings = user.guideBookings.filter(b => b.status === "PENDING");
   const confirmedBookings = user.guideBookings.filter(b => b.status === "CONFIRMED");
+  const completedBookings = user.guideBookings.filter(b => b.status === "COMPLETED");
   const totalEarnings = user.guideBookings
     .filter(b => b.status === "COMPLETED")
     .reduce((sum, b) => sum + b.totalPrice, 0);
 
   const isApproved = user.guideProfile.status === "APPROVED";
+  const reviewMessage =
+    user.guideProfile.status === "REJECTED"
+      ? "Your guide application needs changes before approval. Update your profile and resubmit it for admin review."
+      : user.guideProfile.status === "SUSPENDED"
+        ? "Your guide profile is suspended. Please contact support before accepting new trips."
+        : "Your guide application is under review. This usually takes 24-48 hours.";
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 px-4 py-8 relative">
@@ -51,9 +79,11 @@ export default async function GuideDashboard() {
             <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto text-yellow-600">
               <Clock className="w-10 h-10 animate-pulse" />
             </div>
-            <h2 className="text-3xl font-black tracking-tight">Pending Approval</h2>
+            <h2 className="text-3xl font-black tracking-tight">
+              {user.guideProfile.status === "PENDING_APPROVAL" ? "Pending Approval" : user.guideProfile.status}
+            </h2>
             <p className="text-gray-500">
-              Your guide profile is currently being reviewed by our admin team. This usually takes 24-48 hours.
+              {reviewMessage}
             </p>
             <div className="pt-4 flex flex-col gap-3">
                <Link href="/guide-dashboard/profile">
@@ -106,6 +136,20 @@ export default async function GuideDashboard() {
       </div>
 
       {/* Booking Requests */}
+      {user.notifications.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <h2 className="text-lg font-bold mb-4">Notifications</h2>
+          <div className="space-y-3">
+            {user.notifications.map((notification) => (
+              <div key={notification.id} className="rounded-2xl bg-gray-50 dark:bg-black p-4">
+                <p className="font-bold">{notification.title}</p>
+                <p className="text-sm text-gray-500">{notification.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
         <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-primary" /> New Booking Requests
@@ -157,6 +201,29 @@ export default async function GuideDashboard() {
             ))
           ) : (
             <p className="text-center py-8 text-gray-500">No confirmed trips yet.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+        <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+          <Star className="w-5 h-5 text-yellow-500" /> Completed Trips
+        </h2>
+        <div className="space-y-4">
+          {completedBookings.length > 0 ? (
+            completedBookings.map((trip) => (
+              <div key={trip.id} className="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-gray-50 dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-800">
+                <div className="flex-1">
+                  <p className="font-bold text-lg">{trip.traveler.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(trip.date).toLocaleDateString()} &nbsp;•&nbsp; {trip.duration} hrs &nbsp;•&nbsp; Rs {trip.totalPrice.toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <span className="text-[10px] font-black uppercase bg-green-100 text-green-700 px-3 py-1 rounded-full">Completed</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-center py-8 text-gray-500">No completed trips yet.</p>
           )}
         </div>
       </div>

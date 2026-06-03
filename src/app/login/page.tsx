@@ -30,6 +30,8 @@ export default function LoginPage() {
 
         if (session?.user?.role === "ADMIN") {
           router.push("/admin/dashboard");
+        } else if (session?.user?.role === "GUIDE") {
+          router.push("/guide-dashboard");
         } else {
           router.push("/dashboard");
         }

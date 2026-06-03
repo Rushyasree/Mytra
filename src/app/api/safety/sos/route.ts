@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
+import {
+  checkRateLimit,
+  requireAdmin,
+  requireBookingAccess,
+} from "@/lib/security";
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const rateLimited = checkRateLimit(request, "sos", 5, 60_000);
+  if (rateLimited) return rateLimited;
 
   try {
     const { bookingId, lat, lng } = await request.json();
+    if (!bookingId) {
+      return NextResponse.json({ error: "Booking ID is required" }, { status: 400 });
+    }
+
+    const access = await requireBookingAccess(bookingId);
+    if (access.response) return access.response;
 
     const booking = await prisma.booking.update({
       where: { id: bookingId },
@@ -38,10 +48,8 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   try {
     const alerts = await prisma.booking.findMany({

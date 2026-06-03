@@ -6,20 +6,49 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
 interface GuideGridProps {
-  filters: any;
+  filters: {
+    q: string;
+    city: string;
+    minPrice: number;
+    maxPrice: number;
+    rating: number;
+    gender: string;
+    interests: string[];
+  };
 }
 
+type GuideSearchResult = {
+  id: string;
+  pricePerHour: number;
+  rating: number;
+  gender: string;
+  isVerified: boolean;
+  languages?: string | null;
+  bio?: string | null;
+  city?: { name?: string | null; image?: string | null } | null;
+  user: { name?: string | null; image?: string | null };
+  recommendation?: {
+    matchScore: number;
+    matchReasons: string[];
+  };
+};
+
 export function GuideGrid({ filters }: GuideGridProps) {
-  const [guides, setGuides] = useState<any[]>([]);
+  const [guides, setGuides] = useState<GuideSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState("rating");
+  const [sortBy, setSortBy] = useState("recommended");
 
   useEffect(() => {
     const fetchGuides = async () => {
       setLoading(true);
       try {
         const queryParams = new URLSearchParams({
-          ...filters,
+          q: filters.q,
+          city: filters.city,
+          minPrice: String(filters.minPrice),
+          maxPrice: String(filters.maxPrice),
+          rating: String(filters.rating),
+          gender: filters.gender,
           interests: filters.interests.join(","),
         });
         const res = await fetch(`/api/guides/search?${queryParams.toString()}`);
@@ -37,6 +66,7 @@ export function GuideGrid({ filters }: GuideGridProps) {
   const sortedGuides = [...guides].sort((a, b) => {
     if (sortBy === "price_low") return a.pricePerHour - b.pricePerHour;
     if (sortBy === "price_high") return b.pricePerHour - a.pricePerHour;
+    if (sortBy === "recommended") return (b.recommendation?.matchScore || 0) - (a.recommendation?.matchScore || 0);
     return b.rating - a.rating;
   });
 
@@ -55,6 +85,7 @@ export function GuideGrid({ filters }: GuideGridProps) {
              value={sortBy}
              onChange={(e) => setSortBy(e.target.value)}
            >
+             <option value="recommended">Best Match</option>
              <option value="rating">Top Rated</option>
              <option value="price_low">Price: Low to High</option>
              <option value="price_high">Price: High to Low</option>
@@ -91,6 +122,11 @@ export function GuideGrid({ filters }: GuideGridProps) {
                 
                 {/* Safety Tags */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
+                  {guide.recommendation && (
+                    <div className="bg-primary text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shadow-lg">
+                      {guide.recommendation.matchScore}% Match
+                    </div>
+                  )}
                   {guide.gender === "female" && (
                     <div className="bg-pink-500 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shadow-lg animate-pulse">
                       <Heart className="w-3 h-3 fill-current" /> Safe for Solo Females
@@ -131,6 +167,15 @@ export function GuideGrid({ filters }: GuideGridProps) {
                 </div>
 
                 <div className="space-y-4">
+                  {guide.recommendation?.matchReasons?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {guide.recommendation.matchReasons.map((reason) => (
+                        <span key={reason} className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-xl text-[10px] font-black uppercase text-primary">
+                          {reason}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="flex flex-wrap gap-2">
                     {guide.languages?.split(",").slice(0, 3).map((lang: string) => (
                       <span key={lang} className="px-3 py-1 bg-gray-50 dark:bg-black border border-gray-100 dark:border-gray-800 rounded-xl text-[10px] font-black uppercase text-gray-500">
