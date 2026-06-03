@@ -3,7 +3,7 @@ import { Navbar } from "@/components/ui/Navbar";
 import { Button } from "@/components/ui/Button";
 import { Footer } from "@/components/ui/Footer";
 import { ShieldCheck, Star, Clock, Check, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -16,7 +16,7 @@ const addons = [
   { id: "restaurant", label: "Restaurant Reservations", price: 400, desc: "Pre-book tables at curated local spots" },
 ];
 
-export default function BookingPage() {
+function BookingContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const experienceId = searchParams.get("experienceId");
@@ -379,5 +379,21 @@ export default function BookingPage() {
 
       <Footer />
     </main>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex flex-col pt-16 bg-gray-50 dark:bg-black">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </main>
+    }>
+      <BookingContent />
+    </Suspense>
   );
 }
