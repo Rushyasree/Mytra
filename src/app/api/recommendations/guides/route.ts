@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { parsePreferenceList, scoreGuideRecommendation } from "@/lib/recommendations";
+import {
+  blendSemanticRecommendation,
+  parsePreferenceList,
+  scoreGuideRecommendation,
+} from "@/lib/recommendations";
+import { buildRecommendationQueryText, getGuideSemanticScores } from "@/lib/embeddings";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -36,10 +41,23 @@ export async function GET(req: Request) {
       },
     });
 
+    const preferences = {
+      city,
+      interests,
+      languages,
+      safetyPreference,
+      travelerType,
+      minPrice,
+      maxPrice,
+    };
+    const semantic = await getGuideSemanticScores(
+      guides.map((guide) => guide.id),
+      buildRecommendationQueryText(preferences)
+    );
+
     const recommendations = guides
-      .map((guide) => ({
-        guide,
-        recommendation: scoreGuideRecommendation(guide, {
+      .map((guide) => {
+        const deterministicRecommendation = scoreGuideRecommendation(guide, {
           city,
           interests,
           languages,
@@ -47,12 +65,28 @@ export async function GET(req: Request) {
           travelerType,
           minPrice,
           maxPrice,
-        }),
-      }))
+        });
+
+        return {
+          guide,
+          recommendation: blendSemanticRecommendation(
+            deterministicRecommendation,
+            semantic.scores.get(guide.id) ?? null,
+            semantic.available,
+            semantic.reason
+          ),
+        };
+      })
       .sort((a, b) => b.recommendation.matchScore - a.recommendation.matchScore)
       .slice(0, 10);
 
-    return NextResponse.json({ recommendations });
+    return NextResponse.json({
+      recommendations,
+      semantic: {
+        available: semantic.available,
+        reason: semantic.reason,
+      },
+    });
   } catch (error) {
     console.error("Guide recommendation error:", error);
     return NextResponse.json({ error: "Could not generate guide recommendations." }, { status: 500 });

@@ -48,6 +48,9 @@ model GuideProfile {
   interests     String?  // comma separated: food, culture, nightlife, heritage, etc.
   isFlagged     Boolean  @default(false)
   flagReason    String?
+  embedding     Unsupported("vector(768)")?
+  embeddingText String?
+  embeddingUpdatedAt DateTime?
   
   cityId        String?
   city          City?    @relation(fields: [cityId], references: [id])
@@ -93,6 +96,9 @@ model Experience {
   duration    Int      // in minutes
   category    String   // Food, Heritage, Nightlife, etc.
   tag         String?  // hidden, trending, favorite
+  embedding   Unsupported("vector(768)")?
+  embeddingText String?
+  embeddingUpdatedAt DateTime?
   
   cityId      String
   city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)

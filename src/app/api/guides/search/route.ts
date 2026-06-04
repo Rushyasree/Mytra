@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { parsePreferenceList, scoreGuideRecommendation } from "@/lib/recommendations";
+import {
+  blendSemanticRecommendation,
+  parsePreferenceList,
+  scoreGuideRecommendation,
+} from "@/lib/recommendations";
+import { buildRecommendationQueryText, getGuideSemanticScores } from "@/lib/embeddings";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -61,10 +66,24 @@ export async function GET(request: Request) {
       orderBy: { rating: "desc" },
     });
 
+    const preferences = {
+      q,
+      city,
+      languages,
+      interests,
+      travelerType,
+      safetyPreference,
+      minPrice,
+      maxPrice,
+    };
+    const semantic = await getGuideSemanticScores(
+      candidates.map((guide) => guide.id),
+      buildRecommendationQueryText(preferences)
+    );
+
     const scoredGuides = candidates
-      .map((guide) => ({
-        ...guide,
-        recommendation: scoreGuideRecommendation(guide, {
+      .map((guide) => {
+        const deterministicRecommendation = scoreGuideRecommendation(guide, {
           city,
           languages,
           interests,
@@ -72,8 +91,18 @@ export async function GET(request: Request) {
           safetyPreference,
           minPrice,
           maxPrice,
-        }),
-      }))
+        });
+
+        return {
+          ...guide,
+          recommendation: blendSemanticRecommendation(
+            deterministicRecommendation,
+            semantic.scores.get(guide.id) ?? null,
+            semantic.available,
+            semantic.reason
+          ),
+        };
+      })
       .filter((guide) => interests.length === 0 || guide.recommendation.scoreBreakdown.interests > 0)
       .sort((a, b) => b.recommendation.matchScore - a.recommendation.matchScore || b.rating - a.rating);
 
@@ -83,7 +112,11 @@ export async function GET(request: Request) {
     return NextResponse.json({
       guides,
       total,
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
+      semantic: {
+        available: semantic.available,
+        reason: semantic.reason,
+      },
     });
   } catch (error) {
     console.error(error);

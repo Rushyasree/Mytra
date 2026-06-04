@@ -21,6 +21,10 @@ export type GuideRecommendationPreferences = {
 
 export type GuideRecommendationMeta = {
   matchScore: number;
+  deterministicScore: number;
+  semanticScore: number | null;
+  semanticAvailable: boolean;
+  semanticReason?: string;
   matchReasons: string[];
   scoreBreakdown: {
     city: number;
@@ -30,6 +34,7 @@ export type GuideRecommendationMeta = {
     rating: number;
     safety: number;
     availability: number;
+    semantic: number | null;
   };
 };
 
@@ -131,12 +136,50 @@ export function scoreGuideRecommendation(
 
   return {
     matchScore: Math.round(weightedScore * 100),
+    deterministicScore: Math.round(weightedScore * 100),
+    semanticScore: null,
+    semanticAvailable: false,
     matchReasons: matchReasons.slice(0, 4),
-    scoreBreakdown,
+    scoreBreakdown: { ...scoreBreakdown, semantic: null },
   };
 }
 
 export function parsePreferenceList(value: string | null) {
   if (!value) return [];
   return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+export function blendSemanticRecommendation(
+  recommendation: GuideRecommendationMeta,
+  semanticScore: number | null,
+  semanticAvailable: boolean,
+  semanticReason?: string
+): GuideRecommendationMeta {
+  if (!semanticAvailable || semanticScore === null) {
+    return {
+      ...recommendation,
+      semanticScore: null,
+      semanticAvailable: false,
+      semanticReason,
+    };
+  }
+
+  const deterministic = recommendation.deterministicScore / 100;
+  const blended = deterministic * 0.65 + semanticScore * 0.35;
+  const semanticReasonText = semanticScore >= 0.75 ? "Semantic profile match" : null;
+
+  return {
+    ...recommendation,
+    matchScore: Math.round(blended * 100),
+    semanticScore: Math.round(semanticScore * 100),
+    semanticAvailable: true,
+    semanticReason: undefined,
+    matchReasons: semanticReasonText
+      ? [semanticReasonText, ...recommendation.matchReasons].slice(0, 4)
+      : recommendation.matchReasons,
+    scoreBreakdown: {
+      ...recommendation.scoreBreakdown,
+      semantic: semanticScore,
+    },
+  };
 }
