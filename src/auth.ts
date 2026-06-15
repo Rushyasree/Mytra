@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
-    // For demo purposes, we are just using a simple credentials provider
+    // Credentials authentication for traveler, guide, and admin accounts.
     CredentialsProvider({
       name: 'Credentials',
       credentials: {

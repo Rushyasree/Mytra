@@ -123,7 +123,7 @@ async function main() {
     });
   }
 
-  console.log('Created expanded dummy guides');
+  console.log('Created sample guides');
 
   // Create Experiences
   await prisma.experience.createMany({
@@ -176,7 +176,7 @@ async function main() {
     ],
   });
 
-  console.log('Created dummy experiences');
+  console.log('Created sample experiences');
   console.log('Seed completed successfully!');
 }
 

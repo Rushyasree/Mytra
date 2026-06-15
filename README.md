@@ -28,7 +28,7 @@ Mytra is a premium travel platform that connects international travelers with ve
    - `NEXTAUTH_URL`
    - `GEMINI_API_KEY`
 4. Run migrations: `npx prisma migrate dev`
-5. Optional demo data: `npx tsx prisma/seed.ts`
+5. Optional sample data: `npx tsx prisma/seed.ts`
 6. Start the dev server: `npm run dev`
 
 ## Deploying on Vercel
